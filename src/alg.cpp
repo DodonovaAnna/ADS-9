@@ -1,43 +1,91 @@
 // Copyright 2022 NNTU-CS
-#include  <iostream>
-#include  <fstream>
-#include  <locale>
-#include  <cstdlib>
-#include  "tree.h"
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
 #include <vector>
 #include <memory>
-#include <cstddef> 
+#include <algorithm>
+#include <locale>
+#include "tree.h"
 
-class PermutationTree {
-public:
-   
-    explicit PermutationTree(const std::vector<char>& elements)
+PMNode::PMNode(char val) : value(val) {}
 
-    struct TreeNode {
-        char value;
-        std::vector<std::shared_ptr<TreeNode>> children;
-
-        explicit TreeNode(char val) : value(val) {}
-    }
-
-    std::shared_ptr<TreeNode> getRoot() const { return root_; }
-
-    size_t getTotalPermutations() const { return total_permutations_; }
-
-    std::vector<std::vector<char>> generateAllPermutations() const;
-
-    std::vector<char> getPermutationByIndex(int index) const;
-    std::vector<char> getPermutationByIndexAlt(int index) const;
-
-private:
-    std::shared_ptr<TreeNode> root_;
-    size_t total_permutations_;
-
-    void buildTree(const std::shared_ptr<TreeNode>& parent,
-        std::vector<char> remaining_elements);
-
-    void collectPermutations(const std::shared_ptr<TreeNode>& node,
-        std::vector<char>& current,
-        std::vector<std::vector<char>>& result) const;
+PMTree::PMTree(const std::vector<char>& elements) {
+  root = std::make_shared<PMNode>('\0');
+  build(root, elements);
 }
 
+std::shared_ptr<PMNode> PMTree::getRoot() const {
+  return root;
+}
+
+void PMTree::build(std::shared_ptr<PMNode> node, std::vector<char> remaining) {
+  if (remaining.empty()) return;
+
+  std::sort(remaining.begin(), remaining.end());
+
+  for (size_t i = 0; i < remaining.size(); ++i) {
+    char val = remaining[i];
+    std::shared_ptr<PMNode> child = std::make_shared<PMNode>(val);
+    node->children.push_back(child);
+
+    std::vector<char> next_remaining = remaining;
+    next_remaining.erase(next_remaining.begin() + i);
+    build(child, next_remaining);
+  }
+}
+
+void PMTree::collect(std::shared_ptr<PMNode> node,
+                     std::vector<char>& path,
+                     std::vector<std::vector<char>>& result) {
+  if (node->value != '\0') path.push_back(node->value);
+  if (node->children.empty()) {
+    if (!path.empty()) result.push_back(path);
+  } else {
+    for (auto& child : node->children) {
+      collect(child, path, result);
+    }
+  }
+  if (!path.empty()) path.pop_back();
+}
+
+std::vector<std::vector<char>> getAllPerms(PMTree& tree) {
+  std::vector<std::vector<char>> result;
+  std::vector<char> path;
+  tree.collect(tree.getRoot(), path, result);
+  return result;
+}
+
+std::vector<char> getPerm1(PMTree& tree, int num) {
+  auto all = getAllPerms(tree);
+  if (num <= 0 || num > static_cast<int>(all.size())) return {};
+  return all[num - 1];
+}
+
+int factorial(int n) {
+  return (n <= 1) ? 1 : n * factorial(n - 1);
+}
+
+std::vector<char> getPerm2(PMTree& tree, int num) {
+  std::vector<char> result;
+  std::vector<char> available;
+
+  for (auto& child : tree.getRoot()->children)
+    available.push_back(child->value);
+
+  std::sort(available.begin(), available.end());
+
+  --num;
+  int n = static_cast<int>(available.size());
+
+  while (n--) {
+    int fact = factorial(n);
+    int index = num / fact;
+    num %= fact;
+    if (index >= static_cast<int>(available.size())) return {};
+    result.push_back(available[index]);
+    available.erase(available.begin() + index);
+  }
+
+  return result;
+}
