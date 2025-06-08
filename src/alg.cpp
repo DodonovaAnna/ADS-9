@@ -1,6 +1,9 @@
-#ifndef PERMUTATION_TREE_H
-#define PERMUTATION_TREE_H
-
+// Copyright 2022 NNTU-CS
+#include  <iostream>
+#include  <fstream>
+#include  <locale>
+#include  <cstdlib>
+#include  "tree.h"
 #include <vector>
 #include <memory>
 #include <cstddef> 
@@ -8,14 +11,14 @@
 class PermutationTree {
 public:
    
-    explicit PermutationTree(const std::vector<char>& elements);
+    explicit PermutationTree(const std::vector<char>& elements)
 
     struct TreeNode {
         char value;
         std::vector<std::shared_ptr<TreeNode>> children;
 
         explicit TreeNode(char val) : value(val) {}
-    };
+    }
 
     std::shared_ptr<TreeNode> getRoot() const { return root_; }
 
@@ -36,11 +39,5 @@ private:
     void collectPermutations(const std::shared_ptr<TreeNode>& node,
         std::vector<char>& current,
         std::vector<std::vector<char>>& result) const;
-};
-// Copyright 2022 NNTU-CS
-#include  <iostream>
-#include  <fstream>
-#include  <locale>
-#include  <cstdlib>
-#include  "tree.h"
+}
 
